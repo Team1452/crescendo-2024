@@ -1,0 +1,55 @@
+{
+  "version": 1.0,
+  "startingPose": null,
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "ConsumeNote"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Return From Top-Left Note"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AlignAndShoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Approach Second Note Top-Left"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ConsumeNote"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Return to Speaker From Second Note"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AlignAndShoot"
+          }
+        }
+      ]
+    }
+  },
+  "folder": null,
+  "choreoAuto": false
+}

@@ -1,0 +1,350 @@
+<script>
+    let canvas
+    let pre
+    let programNameInput
+    let context
+
+    let programName = "Auton Sequence"
+
+    let image
+
+    window.addEventListener('load', () => {
+        canvas = document.querySelector('canvas')
+        pre = document.querySelector('#program-code')
+        programNameInput = document.querySelector('#program-name')
+        context = canvas.getContext('2d')
+
+        canvas.fillStyle = '#ff0'
+        context.fillRect(0, 0, canvas.width, canvas.height)
+
+        programNameInput.value = programName
+
+        image = new Image()
+        image.src = 'field2024.png'
+        image.onload = () => {
+            console.log('loaded image')
+            canvas.width = 800
+            canvas.height = image.naturalHeight / image.naturalWidth * canvas.width
+            console.log(image.naturalWidth, image.naturalHeight)
+
+            let frame
+
+            setInterval(() => {
+                frame = requestAnimationFrame(loop)
+            }, 1000 / FPS)
+
+            programNameInput.addEventListener('keydown', (event) => {
+                value = programNameInput.value
+                if (value.length == 0)
+                    event.setCancelled(true)
+                else
+                    programName = programNameInput.value
+            })
+
+            return () => {
+                if (frame) cancelAnimationFrame(frame)
+            }
+        }
+
+    })
+
+    /* 
+     Example program:
+    { type: 'TurnToAngle', args: ['90', 'drive'] }, { type: 'MoveDistance', args: ['1', 'drive'] }
+    */
+
+    let program = []
+    let screenWaypoints = []
+
+    let currentPoint = null
+    let nextPoint = null
+
+    let updatePre = false
+
+    FPS = 60
+
+    function loop() {
+        context.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+        if (currentPoint) {
+            context.beginPath()
+            context.arc(...currentPoint, 3, 0, 2 * Math.PI, false)
+            context.fill()
+        }
+
+        if (nextPoint) {
+            context.beginPath()
+            context.arc(...nextPoint, 3, 0, 2 * Math.PI, false)
+            context.fill()
+        }
+
+        if (currentPoint && nextPoint) {
+            context.beginPath()
+            context.moveTo(...currentPoint)
+            context.lineTo(...nextPoint)
+            context.stroke()
+        }
+
+        for (let i = 0; i < screenWaypoints.length - 1; i++) {
+            let prevWaypoint = screenWaypoints[i]
+            let nextWaypoint = screenWaypoints[i + 1]
+
+            context.beginPath()
+            context.arc(...prevWaypoint, 3, 0, 2 * Math.PI, false)
+            context.fill()
+
+            context.beginPath()
+            context.moveTo(...prevWaypoint)
+            context.lineTo(...nextWaypoint)
+            context.stroke()
+        }
+
+        if (nextPoint || currentPoint) {
+            let point = nextPoint || currentPoint
+
+            let lastGoTo = null
+
+            for (let i = program.length - 1; i >= 0; i--) {
+                if (program[i].type == 'GoTo') {
+                    lastGoTo = program[i]
+                    break
+                }
+            }
+
+            let offsets = [
+                [- 0.5, + 0.5],
+                [+ 0.5, + 0.5],
+                [+ 0.5, 0],
+                [0, 0],
+                [+ 0.5, 0],
+                [+ 0.5, - 0.5],
+                [- 0.5, - 0.5],
+                [- 0.5, + 0.5],
+            ]
+
+            const rotateVector = (vec, radians) => {
+                const cos = Math.cos(radians);
+                const sin = Math.sin(radians);
+                return [vec[0] * cos - vec[1] * sin, vec[0] * sin + vec[1] * cos];
+            };
+
+            let degrees = null
+
+            if (point == nextPoint && currentPoint) {
+                console.log('calculating angle')
+                const dx = nextPoint[0] - currentPoint[0],
+                    dy = nextPoint[1] - currentPoint[1]
+                const angle = Math.atan2(dy, dx)
+                degrees = angle * 180 / Math.PI
+            } else if (lastGoTo) {
+                degrees = Number(lastGoTo.args[0].match(/Rotation2d\.fromDegrees\(([^)]+)\)/)[1])
+            }
+
+            if (degrees != null)
+                offsets = offsets.map(offset => rotateVector(offset, degrees * Math.PI / 180))
+
+            const screenOffset = fieldToScreen(point)
+            const origin = fieldToScreen([0, 0])
+
+            const path = offsets.map(p => {
+                const screenOffset = fieldToScreen(p)
+                return [point[0] + screenOffset[0] - origin[0], point[1] + screenOffset[1] - origin[1]]
+            })
+
+            context.beginPath()
+            context.moveTo(...path[0])
+            path.slice(1).forEach(p => context.lineTo(...p))
+            context.stroke()
+        }
+
+        if (updatePre) {
+            java = programToJava(program)
+            pre.value = java
+            updatePre = false
+        }
+
+        canvas.addEventListener('click', onClick)
+
+        window.addEventListener('keydown', onKeydown)
+    }
+
+    function programToJava(program) {
+        const variableName = programName[0].toLowerCase()
+            + programName.slice(1).replaceAll(' ', '')
+
+        const sequence = program.map(command => `new ${command.type}(${command.args.join(', ')})`)
+            .join(',\n    ')
+            .trim()
+
+        const java = [
+            `var ${variableName} = new SequentialCommandGroup(\n    ${sequence}\n);`,
+            `${variableName}.schedule();`
+        ]
+
+        return java.join('\n')
+    }
+
+    function programToText() {
+        const sequence = program.map(command => `${command.type}, ${command.args.join(', ')})`)
+            .join('\n')
+            .trim()
+        return sequence
+
+    }
+
+    let onClick = (event) => {
+        let x = event.offsetX
+        let y = event.offsetY
+
+        if (screenWaypoints.length > 0) nextPoint = [x, y]
+        else currentPoint = [x, y]
+    }
+
+
+    let fieldHeightMeters = 8.21
+    let fieldWidthMeters = 16.54
+
+    function fieldToScreen([x, y]) {
+        const screenX = x / fieldWidthMeters * canvas.width
+        const screenY = (1 - y / fieldHeightMeters) * canvas.height
+        return [screenX, screenY]
+    }
+
+    function screenToField([x, y]) {
+        const fieldX = x / canvas.width * fieldWidthMeters
+        const fieldY = (1 - y / canvas.height) * fieldHeightMeters
+        return [fieldX, fieldY]
+    }
+
+    function poseStringFrom(pointField, angle) {
+        return `new Pose2d(new Translation2d(${pointField[0].toFixed(2)}, ${pointField[1].toFixed(2)}), Rotation2d.fromDegrees(${angle.toFixed(2)}))`
+    }
+
+    function getPosesFromProgram(program) {
+        return program
+            .split('\n')
+            .map(x => x.trim())
+            .join('')
+            .match(/Pose2d\(new Translation2d\([^\)]+?\), ?Rotation2d.fromDegrees\([^\)]+?\)\)/g)
+            .map(x => {
+                const [px, py, pdegrees] = x.match(/-?\d+\.\d+/g)
+                return {
+                    x: Number(px),
+                    y: Number(py),
+                    degrees: Number(pdegrees)
+                }
+            })
+    }
+
+    let onKeydown = (event) => {
+        switch (event.key) {
+            case 'Enter': {
+                if (event.shiftKey) {
+                    const existingProgram = prompt('Enter existing program:')
+                    // program = existingProgram
+                    //     .split('\n')
+                    //     .map(x => x.trim()
+                    //         .match(/new (\w+)\((.*)\)/))
+                    //     .filter(x => x)
+                    //     .map(x => ({
+                    //         type: x[1],
+                    //         args: x[2].split(',').map(y => y.trim())
+                    //     }))
+                    const existingPoses = getPosesFromProgram(existingProgram)
+                    console.log('program', existingPoses)
+                    screenWaypoints.push(...existingPoses.map(pose => fieldToScreen([pose.x, pose.y])))
+                    updatePre = true
+                    return
+                }
+
+                let currentPointField = screenToField(currentPoint)
+
+                if (screenWaypoints.length == 0) {
+                    const pose = poseStringFrom(currentPointField, 0)
+                    program.push({ type: 'InstantCommand', args: [`() -> drivebase.resetOdometry(${pose})`] })
+                    screenWaypoints.push(currentPoint)
+                    return
+                }
+
+
+                let nextPointField = screenToField(nextPoint)
+
+                let angleRad = Math.atan2(nextPointField[1] - currentPointField[1], nextPointField[0] - currentPointField[0])
+                console.log('angle', angleRad)
+                let angle = angleRad * 180 / Math.PI
+
+                // program.push({ type: 'TurnToAngle', args: [angle.toFixed(2), 'drivebase'] })
+
+                let distance = Math.hypot(nextPointField[1] - currentPointField[1], nextPointField[0] - currentPointField[0])
+
+                console.log('distance', distance)
+
+                // program.push({ type: 'MoveDistance', args: [distance.toFixed(2), 'drivebase'] })
+
+                program.push({ type: 'GoTo', args: [poseStringFrom(nextPointField, angle), 'drivebase'] })
+
+                screenWaypoints.push(nextPoint)
+
+                updatePre = true
+
+                currentPoint = nextPoint
+                nextPoint = null
+
+                break;
+            }
+            case 'Backspace': {
+                if (screenWaypoints.length == 0) {
+                    currentPoint = null
+                    return
+                }
+
+                screenWaypoints.pop()
+                currentPoint = screenWaypoints[screenWaypoints.length - 1]
+                nextPoint = null
+
+                // Unwind last two program steps (turning/moving to deleted point)
+                let lastMoveCommandIndex = null
+                let lastTurnToAngleIndex = null
+                for (let i = program.length - 1; i >= 0; i--) {
+                    let cmd = program[i]
+                    if (cmd.type == 'TurnToAngle' && !lastTurnToAngleIndex) {
+                        lastTurnToAngleIndex = i
+                        if (lastMoveCommandIndex) break
+                    }
+                    if (cmd.type == 'MoveDistance' && !lastMoveCommandIndex) {
+                        lastMoveCommandIndex = i
+                        if (lastTurnToAngleIndex) break
+                    }
+                }
+
+                if (lastTurnToAngleIndex < lastMoveCommandIndex) {
+                    program.splice(lastTurnToAngleIndex, 1)
+                    program.splice(lastMoveCommandIndex - 1, 1)
+                } else {
+                    program.splice(lastMoveCommandIndex, 1)
+                    program.splice(lastTurnToAngleIndex - 1, 1)
+                }
+
+
+                updatePre = true
+
+                break
+            }
+            case 'b': {
+                program.push({ type: 'Balance', args: ['drive'] })
+                updatePre = true
+            }
+            default: break;
+        }
+    }
+</script>
+
+
+<body>
+    <canvas width="500"></canvas>
+    <div style="display: block;">
+        <label for="program-name">Program Name:</label>
+        <input id="program-name">
+    </div>
+    <textarea style="width: 500px; height: 300px" id="program-code"> Auton Program</textarea>
+</body>
