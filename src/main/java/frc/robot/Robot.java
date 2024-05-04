@@ -84,6 +84,7 @@ public class Robot extends LoggedRobot {
   public void disabledInit() {
     robotContainer.setMotorBrake(true); // Break for 3 seconds.
     disabledTimer.reset();
+    
     disabledTimer.start();
 
     robotContainer.ledSubsystem.onDisable();
