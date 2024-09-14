@@ -275,7 +275,7 @@ public class RobotContainer {
             drivebase.drive(
               new Translation2d(velocity, 0),
               driverXbox.getRightX(),
-              false
+              true //why was this set to false? This enables FOC. -ESchless
             );
           },
           drivebase,
