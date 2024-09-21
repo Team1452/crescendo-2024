@@ -2,10 +2,13 @@ package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.core.CoreTalonFX;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -29,7 +32,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
   private final Timer seenSpeakerTimer = new Timer();
 
-  private CANSparkMax leftShooterMotor, rightShooterMotor;
+  private TalonFX leftShooterMotor, rightShooterMotor; // changed from sparkMax to talonFX. All other methods are the same.
   private GenericEntry ampShooterSpeed = RobotContainer.SHUFFLEBOARD_TAB
     .add("Amp Speed", 0.15)
     .getEntry();
@@ -38,11 +41,8 @@ public class ShooterSubsystem extends SubsystemBase {
     .getEntry();
 
   public ShooterSubsystem() {
-    leftShooterMotor =
-      new CANSparkMax(CANIds.kLeftShooterMotor, MotorType.kBrushless);
-    rightShooterMotor =
-      new CANSparkMax(CANIds.kRightShooterMotor, MotorType.kBrushless);
-
+    leftShooterMotor = new TalonFX(CANIds.kLeftShooterMotor); // changed from sparkMax to talonFX. All other methods are the same.
+    rightShooterMotor = new TalonFX(CANIds.kRightShooterMotor); // changed from sparkMax to talonFX. All other methods are the same.
     // Invert left shooter motor, keep right the same
     leftShooterMotor.setInverted(true);
     rightShooterMotor.setInverted(false);
@@ -66,7 +66,7 @@ public class ShooterSubsystem extends SubsystemBase {
       if (target.fiducialID == 4 || target.fiducialID == 7) {
         // System.out.println("Found speaker, spinning up shooter");
 
-        setShooter(0.65);
+        setShooter(0.30);
         seenSpeakerTimer.reset();
         seenSpeakerTimer.start();
         seesSpeakerAprilTag = true;

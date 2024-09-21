@@ -93,8 +93,7 @@ public class ClimbSubsystem extends SubsystemBase {
     double leftClimbVelocity,
     double rightClimbVelocity
   ) {
-    if (
-      (leftClimbVelocity < 0 && leftClimber.getEncoder().getPosition() < 0) ||
+    if ( (leftClimbVelocity < 0 && leftClimber.getEncoder().getPosition() < 0) ||
       (
         leftClimbVelocity > 0 &&
         leftClimber.getEncoder().getPosition() >=

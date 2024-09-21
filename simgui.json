@@ -1,0 +1,88 @@
+{
+  "HALProvider": {
+    "Other Devices": {
+      "Pigeon 2 (v6)[38]": {
+        "header": {
+          "open": true
+        }
+      },
+      "SPARK MAX [19]": {
+        "header": {
+          "open": true
+        }
+      },
+      "SPARK MAX [35]": {
+        "header": {
+          "open": true
+        }
+      },
+      "SPARK MAX [36]": {
+        "header": {
+          "open": true
+        }
+      },
+      "SPARK MAX [7]": {
+        "header": {
+          "open": true
+        }
+      }
+    },
+    "RoboRIO": {
+      "RoboRIO Input": {
+        "open": true
+      },
+      "window": {
+        "visible": true
+      }
+    }
+  },
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/Shuffleboard/Main/Degree Controller": "PIDController",
+      "/Shuffleboard/Main/Field": "Field2d",
+      "/SmartDashboard/Field": "Field2d",
+      "/SmartDashboard/Pigeon 2 (v6) [38]": "Gyro"
+    },
+    "windows": {
+      "/Shuffleboard/Main/Field": {
+        "bottom": 1476,
+        "height": 8.210550308227539,
+        "left": 150,
+        "right": 2961,
+        "top": 79,
+        "width": 16.541748046875,
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/Field": {
+        "bottom": 1476,
+        "height": 8.210550308227539,
+        "left": 150,
+        "right": 2961,
+        "top": 79,
+        "width": 16.541748046875,
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "LiveWindow": {
+        "open": true
+      },
+      "SmartDashboard": {
+        "open": true
+      }
+    }
+  },
+  "NetworkTables Info": {
+    "Connections": {
+      "open": true
+    },
+    "visible": true
+  }
+}

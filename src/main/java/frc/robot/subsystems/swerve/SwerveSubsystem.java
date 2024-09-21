@@ -197,7 +197,7 @@ public class SwerveSubsystem extends SubsystemBase {
    * calculates and commands module states accordingly.  Can use either open-loop or closed-loop velocity control for
    * the wheel velocities.  Also has field- and robot-relative modes, which affect how the translation vector is used.
    *
-   * @param translation   {@link Translation2d} that is the commanded linear velocity of the robot, in meters per
+   * @param translation    {@link Translation2d} that is the commanded linear velocity of the robot, in meters per
    *                      second. In robot-relative mode, positive x is towards the bow (front) and positive y is
    *                      towards port (left).  In field-relative mode, positive x is away from the alliance wall
    *                      (field North) and positive y is towards the left wall when looking through the driver station
@@ -531,4 +531,8 @@ public class SwerveSubsystem extends SubsystemBase {
   public Rotation2d getPitch() {
     return swerveDrive.getPitch();
   }
+
+  public double getYaw() {
+    return (swerveDrive.getYaw().getDegrees());
+  } 
 }

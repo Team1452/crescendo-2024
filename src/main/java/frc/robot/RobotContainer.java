@@ -1,5 +1,5 @@
 package frc.robot;
-
+import frc.robot.commands.RealignToForward;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -47,6 +47,8 @@ import java.io.File;
  * the robot (including
  * subsystems, commands, and trigger mappings) should be declared here.
  */
+
+ /*TODO move to it's own subsystem. "drive"*/
 public class RobotContainer {
 
   private static RobotContainer instance = null;
@@ -135,13 +137,14 @@ public class RobotContainer {
             -driverXbox.getLeftY(), // Inverted.
             OperatorConstants.kTranslationDeadband
           ) *
-          (1 - driverXbox.getRightTriggerAxis()),
+          (1 - driverXbox.getRightTriggerAxis()), // remove
         () ->
           MathUtil.applyDeadband(
             -driverXbox.getLeftX(), // Inverted.
             OperatorConstants.kTranslationDeadband
           ) *
-          (1 - driverXbox.getRightTriggerAxis()),
+          (1 - driverXbox.getRightTriggerAxis()
+          ),
         () -> {
           var pov = driverXbox.getPOV();
 
@@ -220,11 +223,16 @@ public class RobotContainer {
             shooterSubsystem.createShootAmpCommand(intakeIndexerSubsystem)
           )
       );
+    new Trigger(driverXbox::getLeftStickButton) //realign to yaw 0 on stick press
+      .toggleOnTrue(
+        new RealignToForward(drivebase)
+          .handleInterrupt(() -> drivebase.drive(new Translation2d(0, 0), 0, true))
+      );
 
     /* CLIMB LOGIC */
     var climbSubsystem = new ClimbSubsystem();
 
-    // If left stick button is pressed, enter climb mode.
+    // If right stick button is pressed, enter climb mode.s
     // Left/right hooks are controlled like tank drive,
     // robot only moves forward/backward.
     var climbMode = new InstantCommand(() ->
@@ -256,7 +264,7 @@ public class RobotContainer {
               )
             ) leftClimbVelocity = 0;
             if (
-              rightClimbVelocity < 0 &&
+              rightClimbVelocity < 0 && 
               (
                 climbSubsystem.rightLimitHit() ||
                 climbSubsystem.getRightPosition() < 1e-3
@@ -275,13 +283,14 @@ public class RobotContainer {
             drivebase.drive(
               new Translation2d(velocity, 0),
               driverXbox.getRightX(),
-              false
+            true //changed to true, realignment will happen with left stick press, which will reaign robot to raw gyro yaw 0.            
+
             );
           },
           drivebase,
           climbSubsystem,
           intakeIndexerSubsystem
-        )
+        ) 
       )
       .beforeStarting(() -> {
         System.out.println("Entering climb mode...");
@@ -322,6 +331,8 @@ public class RobotContainer {
     new Trigger(() -> driverXbox.getRawButton(7) && !climbMode.isScheduled())
       .whileTrue(new GoToAmp(drivebase));
 
+    
+  
     // Pull down. Pull left until current limit, pull right until current limit, then pull both.
     // new Trigger(() -> driverXbox.getLeftBumper())
     //   .toggleOnTrue(new SequentialCommandGroup(
