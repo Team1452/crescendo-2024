@@ -6,6 +6,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.core.CoreTalonFX;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.CAN;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
@@ -32,7 +33,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
   private final Timer seenSpeakerTimer = new Timer();
 
-  private TalonFX leftShooterMotor, rightShooterMotor; // changed from sparkMax to talonFX. All other methods are the same.
+  private CANSparkMax leftShooterMotor, rightShooterMotor; 
   private GenericEntry ampShooterSpeed = RobotContainer.SHUFFLEBOARD_TAB
     .add("Amp Speed", 0.15)
     .getEntry();
@@ -41,8 +42,8 @@ public class ShooterSubsystem extends SubsystemBase {
     .getEntry();
 
   public ShooterSubsystem() {
-    leftShooterMotor = new TalonFX(CANIds.kLeftShooterMotor); // changed from sparkMax to talonFX. All other methods are the same.
-    rightShooterMotor = new TalonFX(CANIds.kRightShooterMotor); // changed from sparkMax to talonFX. All other methods are the same.
+    leftShooterMotor = new CANSparkMax(CANIds.kLeftShooterMotor, MotorType.kBrushless); 
+    rightShooterMotor = new CANSparkMax(CANIds.kRightShooterMotor,MotorType.kBrushless); 
     // Invert left shooter motor, keep right the same
     leftShooterMotor.setInverted(true);
     rightShooterMotor.setInverted(false);
