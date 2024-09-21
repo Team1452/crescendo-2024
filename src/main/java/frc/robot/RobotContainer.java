@@ -283,8 +283,7 @@ public class RobotContainer {
             drivebase.drive(
               new Translation2d(velocity, 0),
               driverXbox.getRightX(),
-            true //changed to true, realignment will happen with left stick press, which will reaign robot to raw gyro yaw 0.            
-
+              true
             );
           },
           drivebase,
